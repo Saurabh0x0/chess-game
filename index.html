@@ -1,26 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Saurabh Chess ♟️</title>
 
+  <!-- Chessboard CSS -->
   <link rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/chessboard.js/1.0.0/chessboard.min.css">
+    href="https://cdnjs.cloudflare.com/ajax/libs/chessboard.js/1.0.0/chessboard.min.css"/>
 
   <style>
     body {
       background: #111;
       color: white;
       text-align: center;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
     }
 
     h1 {
-      margin-top: 20px;
+      margin-bottom: 20px;
     }
 
     #board {
       width: 350px;
-      margin: 20px auto;
+      margin: auto;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 8px 16px;
+      background: #222;
+      color: white;
+      border: 1px solid white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #444;
     }
   </style>
 </head>
@@ -29,15 +46,22 @@
 
 <h1>Saurabh Chess ♟️</h1>
 <div id="board"></div>
+<button onclick="resetGame()">Restart Game</button>
 
+<!-- jQuery (REQUIRED) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Chess.js (Rules Engine) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
+
+<!-- Chessboard.js (Board UI) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard.js/1.0.0/chessboard.min.js"></script>
 
 <script>
 var board = null
 var game = new Chess()
 
-function onDragStart (source, piece) {
+function onDragStart(source, piece) {
   if (game.game_over()) return false
 
   if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
@@ -46,7 +70,7 @@ function onDragStart (source, piece) {
   }
 }
 
-function onDrop (source, target) {
+function onDrop(source, target) {
   var move = game.move({
     from: source,
     to: target,
@@ -54,10 +78,21 @@ function onDrop (source, target) {
   })
 
   if (move === null) return 'snapback'
+
+  if (game.in_checkmate()) {
+    setTimeout(() => {
+      alert("Checkmate! Game Over ♟️")
+    }, 100)
+  }
 }
 
-function onSnapEnd () {
+function onSnapEnd() {
   board.position(game.fen())
+}
+
+function resetGame() {
+  game.reset()
+  board.start()
 }
 
 board = Chessboard('board', {
