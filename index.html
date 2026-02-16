@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <title>Saurabh Chess ♟️</title>
 
-<link rel="stylesheet"
-href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"/>
-
 <style>
 body {
   background: #111;
@@ -17,14 +14,29 @@ body {
 }
 
 #board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
   width: 90vw;
   max-width: 400px;
   margin: 20px auto;
+  border: 3px solid white;
 }
+
+.square {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.light { background: #f0d9b5; }
+.dark { background: #b58863; }
 
 button {
   padding: 10px 20px;
-  margin-top: 15px;
   background: #222;
   color: white;
   border: 1px solid white;
@@ -36,55 +48,57 @@ button {
 
 <h1>Saurabh Chess ♟️</h1>
 <div id="board"></div>
-<button onclick="resetGame()">Restart Game</button>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
-<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+<button onclick="resetBoard()">Restart</button>
 
 <script>
 
-var game = new Chess();
+const boardElement = document.getElementById("board");
 
-var board = Chessboard('board', {
-  draggable: true,
-  position: 'start',
-  onDragStart: function (source, piece) {
+const pieces = [
+  "♜","♞","♝","♛","♚","♝","♞","♜",
+  "♟","♟","♟","♟","♟","♟","♟","♟",
+  "","","","","","","","",
+  "","","","","","","","",
+  "","","","","","","","",
+  "","","","","","","","",
+  "♙","♙","♙","♙","♙","♙","♙","♙",
+  "♖","♘","♗","♕","♔","♗","♘","♖"
+];
 
-    if (game.game_over()) return false;
+let selected = null;
 
-    if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-        (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
-      return false;
-    }
-  },
-
-  onDrop: function (source, target) {
-
-    var move = game.move({
-      from: source,
-      to: target,
-      promotion: 'q'
-    });
-
-    if (move === null) return 'snapback';
-
-    if (game.in_checkmate()) {
-      setTimeout(function(){
-        alert("Checkmate! ♟️ Game Over");
-      }, 100);
-    }
-  },
-
-  onSnapEnd: function () {
-    board.position(game.fen());
+function createBoard() {
+  boardElement.innerHTML = "";
+  for (let i = 0; i < 64; i++) {
+    const square = document.createElement("div");
+    square.classList.add("square");
+    square.classList.add((Math.floor(i/8)+i)%2===0 ? "light" : "dark");
+    square.dataset.index = i;
+    square.textContent = pieces[i];
+    square.addEventListener("click", onSquareClick);
+    boardElement.appendChild(square);
   }
-});
-
-function resetGame() {
-  game.reset();
-  board.start();
 }
+
+function onSquareClick(e) {
+  const index = e.target.dataset.index;
+
+  if (selected === null && pieces[index] !== "") {
+    selected = index;
+    e.target.style.outline = "3px solid red";
+  } else if (selected !== null) {
+    pieces[index] = pieces[selected];
+    pieces[selected] = "";
+    selected = null;
+    createBoard();
+  }
+}
+
+function resetBoard() {
+  location.reload();
+}
+
+createBoard();
 
 </script>
 
