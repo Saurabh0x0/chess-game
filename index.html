@@ -46,95 +46,142 @@ button{
 }
 </style>
 </head>
+
 <body>
 
 <h2>Saurabh Chess ♟️</h2>
 <div id="board"></div>
-<button onclick="init()">Restart</button>
+<p id="status"></p>
+<button onclick="resetGame()">Restart</button>
+
+<script src="chess.min.js"></script>
 
 <script>
 
+const game = new Chess();
 const boardEl = document.getElementById("board");
+const statusEl = document.getElementById("status");
 
-let selected=null;
-let turn="w";
+let selectedSquare = null;
 
-let board=[
-["r","n","b","q","k","b","n","r"],
-["p","p","p","p","p","p","p","p"],
-["","","","","","","",""],
-["","","","","","","",""],
-["","","","","","","",""],
-["","","","","","","",""],
-["P","P","P","P","P","P","P","P"],
-["R","N","B","Q","K","B","N","R"]
-];
+function renderBoard(){
+  boardEl.innerHTML="";
+  const board = game.board();
 
-function symbol(p){
-const map={
-"p":"♟","r":"♜","n":"♞","b":"♝","q":"♛","k":"♚",
-"P":"♙","R":"♖","N":"♘","B":"♗","Q":"♕","K":"♔"
-};
-return map[p]||"";
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+
+      const squareName = String.fromCharCode(97+c)+(8-r);
+      const squareDiv = document.createElement("div");
+
+      squareDiv.classList.add("square");
+      squareDiv.classList.add((r+c)%2==0?"light":"dark");
+      squareDiv.dataset.square = squareName;
+
+      const piece = board[r][c];
+      if(piece){
+        squareDiv.textContent = getSymbol(piece);
+      }
+
+      squareDiv.onclick = onSquareClick;
+      boardEl.appendChild(squareDiv);
+    }
+  }
+
+  updateStatus();
 }
 
-function render(){
-boardEl.innerHTML="";
-for(let r=0;r<8;r++){
-for(let c=0;c<8;c++){
-let sq=document.createElement("div");
-sq.className="square "+((r+c)%2==0?"light":"dark");
-sq.dataset.r=r;
-sq.dataset.c=c;
-sq.textContent=symbol(board[r][c]);
-sq.onclick=clickSquare;
-boardEl.appendChild(sq);
-}
-}
+function getSymbol(piece){
+  const map = {
+    p:"♟", r:"♜", n:"♞", b:"♝", q:"♛", k:"♚"
+  };
+
+  let symbol = map[piece.type];
+
+  if(piece.color==="w"){
+    return symbol.replace("♟","♙")
+                 .replace("♜","♖")
+                 .replace("♞","♘")
+                 .replace("♝","♗")
+                 .replace("♛","♕")
+                 .replace("♚","♔");
+  }
+
+  return symbol;
 }
 
-function clearHighlight(){
-document.querySelectorAll(".square").forEach(s=>s.classList.remove("highlight"));
+function clearHighlights(){
+  document.querySelectorAll(".square")
+    .forEach(s=>s.classList.remove("highlight"));
 }
 
-function clickSquare(e){
-let r=e.target.dataset.r;
-let c=e.target.dataset.c;
-let piece=board[r][c];
+function onSquareClick(e){
 
-if(selected){
-let [sr,sc]=selected;
-board[r][c]=board[sr][sc];
-board[sr][sc]="";
-selected=null;
-turn=turn==="w"?"b":"w";
-clearHighlight();
-render();
-return;
+  const square = e.target.dataset.square;
+
+  if(selectedSquare){
+
+    const move = game.move({
+      from:selectedSquare,
+      to:square,
+      promotion:'q'
+    });
+
+    clearHighlights();
+    selectedSquare=null;
+
+    if(move){
+      renderBoard();
+    }
+
+  } else {
+
+    const moves = game.moves({
+      square:square,
+      verbose:true
+    });
+
+    if(moves.length>0){
+      selectedSquare = square;
+
+      moves.forEach(m=>{
+        const target = document.querySelector(`[data-square="${m.to}"]`);
+        if(target) target.classList.add("highlight");
+      });
+    }
+
+  }
 }
 
-if(piece!=="" && ((turn==="w" && piece===piece.toUpperCase())||(turn==="b" && piece===piece.toLowerCase()))){
-selected=[r,c];
-e.target.classList.add("highlight");
-}
+function updateStatus(){
+
+  let status="";
+
+  if(game.in_checkmate()){
+    status = "Checkmate! " +
+      (game.turn()==='w' ? "Black wins" : "White wins");
+  }
+  else if(game.in_draw()){
+    status="Draw!";
+  }
+  else{
+    status = (game.turn()==='w'?"White":"Black") + " to move";
+
+    if(game.in_check()){
+      status += " — Check!";
+    }
+  }
+
+  statusEl.textContent = status;
 }
 
-function init(){
-turn="w";
-board=[
-["r","n","b","q","k","b","n","r"],
-["p","p","p","p","p","p","p","p"],
-["","","","","","","",""],
-["","","","","","","",""],
-["","","","","","","",""],
-["","","","","","","",""],
-["P","P","P","P","P","P","P","P"],
-["R","N","B","Q","K","B","N","R"]
-];
-render();
+function resetGame(){
+  game.reset();
+  selectedSquare=null;
+  renderBoard();
 }
 
-init();
+renderBoard();
 
 </script>
 
