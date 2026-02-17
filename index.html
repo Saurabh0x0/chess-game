@@ -5,100 +5,154 @@
 <title>Saurabh Chess ♟️</title>
 
 <style>
-body {
-  background: #111;
-  color: white;
-  text-align: center;
-  font-family: Arial;
-  padding: 20px;
+body{
+  background:#111;
+  color:white;
+  text-align:center;
+  font-family:Arial;
+  padding:20px;
 }
 
-#board {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  width: 90vw;
-  max-width: 400px;
-  margin: 20px auto;
-  border: 3px solid white;
+#board{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  width:90vw;
+  max-width:420px;
+  margin:20px auto;
+  border:3px solid white;
 }
 
-.square {
-  width: 100%;
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  cursor: pointer;
+.square{
+  aspect-ratio:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+  cursor:pointer;
 }
 
-.light { background: #f0d9b5; }
-.dark { background: #b58863; }
+.light{ background:#f0d9b5; }
+.dark{ background:#b58863; }
 
-button {
-  padding: 10px 20px;
-  background: #222;
-  color: white;
-  border: 1px solid white;
+.highlight{
+  background:#7fbf7f !important;
+}
+
+button{
+  padding:8px 18px;
+  background:#222;
+  color:white;
+  border:1px solid white;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Saurabh Chess ♟️</h1>
+<h2>Saurabh Chess ♟️</h2>
 <div id="board"></div>
-<button onclick="resetBoard()">Restart</button>
+<button onclick="resetGame()">Restart</button>
+
+<!-- Chess engine only -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
 
 <script>
 
-const boardElement = document.getElementById("board");
+const game = new Chess();
+const boardEl = document.getElementById("board");
+let selectedSquare = null;
 
-const pieces = [
-  "♜","♞","♝","♛","♚","♝","♞","♜",
-  "♟","♟","♟","♟","♟","♟","♟","♟",
-  "","","","","","","","",
-  "","","","","","","","",
-  "","","","","","","","",
-  "","","","","","","","",
-  "♙","♙","♙","♙","♙","♙","♙","♙",
-  "♖","♘","♗","♕","♔","♗","♘","♖"
-];
+function renderBoard(){
+  boardEl.innerHTML = "";
+  const board = game.board();
 
-let selected = null;
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      const square = document.createElement("div");
+      square.classList.add("square");
+      square.classList.add((r+c)%2==0 ? "light":"dark");
 
-function createBoard() {
-  boardElement.innerHTML = "";
-  for (let i = 0; i < 64; i++) {
-    const square = document.createElement("div");
-    square.classList.add("square");
-    square.classList.add((Math.floor(i/8)+i)%2===0 ? "light" : "dark");
-    square.dataset.index = i;
-    square.textContent = pieces[i];
-    square.addEventListener("click", onSquareClick);
-    boardElement.appendChild(square);
+      const squareName = String.fromCharCode(97+c)+(8-r);
+      square.dataset.square = squareName;
+
+      const piece = board[r][c];
+      if(piece){
+        square.textContent = getPieceSymbol(piece);
+      }
+
+      square.addEventListener("click", onSquareClick);
+      boardEl.appendChild(square);
+    }
   }
 }
 
-function onSquareClick(e) {
-  const index = e.target.dataset.index;
+function getPieceSymbol(piece){
+  const symbols = {
+    p:"♟", r:"♜", n:"♞", b:"♝", q:"♛", k:"♚"
+  };
+  let sym = symbols[piece.type];
+  if(piece.color === "w"){
+    return sym.replace("♟","♙")
+              .replace("♜","♖")
+              .replace("♞","♘")
+              .replace("♝","♗")
+              .replace("♛","♕")
+              .replace("♚","♔");
+  }
+  return sym;
+}
 
-  if (selected === null && pieces[index] !== "") {
-    selected = index;
-    e.target.style.outline = "3px solid red";
-  } else if (selected !== null) {
-    pieces[index] = pieces[selected];
-    pieces[selected] = "";
-    selected = null;
-    createBoard();
+function clearHighlights(){
+  document.querySelectorAll(".square").forEach(s=>{
+    s.classList.remove("highlight");
+  });
+}
+
+function onSquareClick(e){
+  const square = e.target.dataset.square;
+  if(!square) return;
+
+  if(selectedSquare){
+    const move = game.move({
+      from:selectedSquare,
+      to:square,
+      promotion:'q'
+    });
+
+    clearHighlights();
+    selectedSquare = null;
+
+    if(move){
+      renderBoard();
+
+      if(game.in_checkmate()){
+        setTimeout(()=>{
+          alert("Checkmate! Game Over ♟️");
+        },100);
+      }
+    }
+  }else{
+    const moves = game.moves({
+      square:square,
+      verbose:true
+    });
+
+    if(moves.length > 0){
+      selectedSquare = square;
+      moves.forEach(m=>{
+        const target = document.querySelector(`[data-square="${m.to}"]`);
+        if(target) target.classList.add("highlight");
+      });
+    }
   }
 }
 
-function resetBoard() {
-  location.reload();
+function resetGame(){
+  game.reset();
+  renderBoard();
 }
 
-createBoard();
+renderBoard();
 
 </script>
 
