@@ -27,12 +27,12 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:28px;
+  font-size:30px;
   cursor:pointer;
 }
 
-.light{ background:#f0d9b5; }
-.dark{ background:#b58863; }
+.light{background:#f0d9b5;}
+.dark{background:#b58863;}
 
 .highlight{
   background:#7fbf7f !important;
@@ -46,113 +46,95 @@ button{
 }
 </style>
 </head>
-
 <body>
 
 <h2>Saurabh Chess ♟️</h2>
 <div id="board"></div>
-<button onclick="resetGame()">Restart</button>
-
-<!-- Chess engine only -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
+<button onclick="init()">Restart</button>
 
 <script>
 
-const game = new Chess();
 const boardEl = document.getElementById("board");
-let selectedSquare = null;
 
-function renderBoard(){
-  boardEl.innerHTML = "";
-  const board = game.board();
+let selected=null;
+let turn="w";
 
-  for(let r=0;r<8;r++){
-    for(let c=0;c<8;c++){
-      const square = document.createElement("div");
-      square.classList.add("square");
-      square.classList.add((r+c)%2==0 ? "light":"dark");
+let board=[
+["r","n","b","q","k","b","n","r"],
+["p","p","p","p","p","p","p","p"],
+["","","","","","","",""],
+["","","","","","","",""],
+["","","","","","","",""],
+["","","","","","","",""],
+["P","P","P","P","P","P","P","P"],
+["R","N","B","Q","K","B","N","R"]
+];
 
-      const squareName = String.fromCharCode(97+c)+(8-r);
-      square.dataset.square = squareName;
-
-      const piece = board[r][c];
-      if(piece){
-        square.textContent = getPieceSymbol(piece);
-      }
-
-      square.addEventListener("click", onSquareClick);
-      boardEl.appendChild(square);
-    }
-  }
+function symbol(p){
+const map={
+"p":"♟","r":"♜","n":"♞","b":"♝","q":"♛","k":"♚",
+"P":"♙","R":"♖","N":"♘","B":"♗","Q":"♕","K":"♔"
+};
+return map[p]||"";
 }
 
-function getPieceSymbol(piece){
-  const symbols = {
-    p:"♟", r:"♜", n:"♞", b:"♝", q:"♛", k:"♚"
-  };
-  let sym = symbols[piece.type];
-  if(piece.color === "w"){
-    return sym.replace("♟","♙")
-              .replace("♜","♖")
-              .replace("♞","♘")
-              .replace("♝","♗")
-              .replace("♛","♕")
-              .replace("♚","♔");
-  }
-  return sym;
+function render(){
+boardEl.innerHTML="";
+for(let r=0;r<8;r++){
+for(let c=0;c<8;c++){
+let sq=document.createElement("div");
+sq.className="square "+((r+c)%2==0?"light":"dark");
+sq.dataset.r=r;
+sq.dataset.c=c;
+sq.textContent=symbol(board[r][c]);
+sq.onclick=clickSquare;
+boardEl.appendChild(sq);
+}
+}
 }
 
-function clearHighlights(){
-  document.querySelectorAll(".square").forEach(s=>{
-    s.classList.remove("highlight");
-  });
+function clearHighlight(){
+document.querySelectorAll(".square").forEach(s=>s.classList.remove("highlight"));
 }
 
-function onSquareClick(e){
-  const square = e.target.dataset.square;
-  if(!square) return;
+function clickSquare(e){
+let r=e.target.dataset.r;
+let c=e.target.dataset.c;
+let piece=board[r][c];
 
-  if(selectedSquare){
-    const move = game.move({
-      from:selectedSquare,
-      to:square,
-      promotion:'q'
-    });
-
-    clearHighlights();
-    selectedSquare = null;
-
-    if(move){
-      renderBoard();
-
-      if(game.in_checkmate()){
-        setTimeout(()=>{
-          alert("Checkmate! Game Over ♟️");
-        },100);
-      }
-    }
-  }else{
-    const moves = game.moves({
-      square:square,
-      verbose:true
-    });
-
-    if(moves.length > 0){
-      selectedSquare = square;
-      moves.forEach(m=>{
-        const target = document.querySelector(`[data-square="${m.to}"]`);
-        if(target) target.classList.add("highlight");
-      });
-    }
-  }
+if(selected){
+let [sr,sc]=selected;
+board[r][c]=board[sr][sc];
+board[sr][sc]="";
+selected=null;
+turn=turn==="w"?"b":"w";
+clearHighlight();
+render();
+return;
 }
 
-function resetGame(){
-  game.reset();
-  renderBoard();
+if(piece!=="" && ((turn==="w" && piece===piece.toUpperCase())||(turn==="b" && piece===piece.toLowerCase()))){
+selected=[r,c];
+e.target.classList.add("highlight");
+}
 }
 
-renderBoard();
+function init(){
+turn="w";
+board=[
+["r","n","b","q","k","b","n","r"],
+["p","p","p","p","p","p","p","p"],
+["","","","","","","",""],
+["","","","","","","",""],
+["","","","","","","",""],
+["","","","","","","",""],
+["P","P","P","P","P","P","P","P"],
+["R","N","B","Q","K","B","N","R"]
+];
+render();
+}
+
+init();
 
 </script>
 
