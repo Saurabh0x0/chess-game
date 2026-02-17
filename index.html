@@ -44,6 +44,11 @@ button{
   color:white;
   border:1px solid white;
 }
+
+#status{
+  margin-top:10px;
+  font-weight:bold;
+}
 </style>
 </head>
 
@@ -51,138 +56,142 @@ button{
 
 <h2>Saurabh Chess ♟️</h2>
 <div id="board"></div>
-<p id="status"></p>
+<div id="status"></div>
 <button onclick="resetGame()">Restart</button>
 
-<script src="chess.min.js"></script>
+<!-- Load local chess engine -->
+<script defer src="chess.min.js"></script>
 
-<script>
+<script defer>
 
-const game = new Chess();
-const boardEl = document.getElementById("board");
-const statusEl = document.getElementById("status");
+document.addEventListener("DOMContentLoaded", function(){
 
-let selectedSquare = null;
+  const game = new Chess();
+  const boardEl = document.getElementById("board");
+  const statusEl = document.getElementById("status");
 
-function renderBoard(){
-  boardEl.innerHTML="";
-  const board = game.board();
+  let selectedSquare = null;
 
-  for(let r=0;r<8;r++){
-    for(let c=0;c<8;c++){
+  function renderBoard(){
+    boardEl.innerHTML="";
+    const board = game.board();
 
-      const squareName = String.fromCharCode(97+c)+(8-r);
-      const squareDiv = document.createElement("div");
+    for(let r=0;r<8;r++){
+      for(let c=0;c<8;c++){
 
-      squareDiv.classList.add("square");
-      squareDiv.classList.add((r+c)%2==0?"light":"dark");
-      squareDiv.dataset.square = squareName;
+        const squareName = String.fromCharCode(97+c)+(8-r);
+        const squareDiv = document.createElement("div");
 
-      const piece = board[r][c];
-      if(piece){
-        squareDiv.textContent = getSymbol(piece);
+        squareDiv.classList.add("square");
+        squareDiv.classList.add((r+c)%2==0?"light":"dark");
+        squareDiv.dataset.square = squareName;
+
+        const piece = board[r][c];
+        if(piece){
+          squareDiv.textContent = getSymbol(piece);
+        }
+
+        squareDiv.onclick = onSquareClick;
+        boardEl.appendChild(squareDiv);
+      }
+    }
+
+    updateStatus();
+  }
+
+  function getSymbol(piece){
+    const map = {
+      p:"♟", r:"♜", n:"♞", b:"♝", q:"♛", k:"♚"
+    };
+
+    let symbol = map[piece.type];
+
+    if(piece.color==="w"){
+      return symbol.replace("♟","♙")
+                   .replace("♜","♖")
+                   .replace("♞","♘")
+                   .replace("♝","♗")
+                   .replace("♛","♕")
+                   .replace("♚","♔");
+    }
+
+    return symbol;
+  }
+
+  function clearHighlights(){
+    document.querySelectorAll(".square")
+      .forEach(s=>s.classList.remove("highlight"));
+  }
+
+  function onSquareClick(e){
+
+    const square = e.target.dataset.square;
+
+    if(selectedSquare){
+
+      const move = game.move({
+        from:selectedSquare,
+        to:square,
+        promotion:'q'
+      });
+
+      clearHighlights();
+      selectedSquare=null;
+
+      if(move){
+        renderBoard();
       }
 
-      squareDiv.onclick = onSquareClick;
-      boardEl.appendChild(squareDiv);
-    }
-  }
+    } else {
 
-  updateStatus();
-}
-
-function getSymbol(piece){
-  const map = {
-    p:"♟", r:"♜", n:"♞", b:"♝", q:"♛", k:"♚"
-  };
-
-  let symbol = map[piece.type];
-
-  if(piece.color==="w"){
-    return symbol.replace("♟","♙")
-                 .replace("♜","♖")
-                 .replace("♞","♘")
-                 .replace("♝","♗")
-                 .replace("♛","♕")
-                 .replace("♚","♔");
-  }
-
-  return symbol;
-}
-
-function clearHighlights(){
-  document.querySelectorAll(".square")
-    .forEach(s=>s.classList.remove("highlight"));
-}
-
-function onSquareClick(e){
-
-  const square = e.target.dataset.square;
-
-  if(selectedSquare){
-
-    const move = game.move({
-      from:selectedSquare,
-      to:square,
-      promotion:'q'
-    });
-
-    clearHighlights();
-    selectedSquare=null;
-
-    if(move){
-      renderBoard();
-    }
-
-  } else {
-
-    const moves = game.moves({
-      square:square,
-      verbose:true
-    });
-
-    if(moves.length>0){
-      selectedSquare = square;
-
-      moves.forEach(m=>{
-        const target = document.querySelector(`[data-square="${m.to}"]`);
-        if(target) target.classList.add("highlight");
+      const moves = game.moves({
+        square:square,
+        verbose:true
       });
-    }
 
-  }
-}
+      if(moves.length>0){
+        selectedSquare = square;
 
-function updateStatus(){
+        moves.forEach(m=>{
+          const target = document.querySelector(`[data-square="${m.to}"]`);
+          if(target) target.classList.add("highlight");
+        });
+      }
 
-  let status="";
-
-  if(game.in_checkmate()){
-    status = "Checkmate! " +
-      (game.turn()==='w' ? "Black wins" : "White wins");
-  }
-  else if(game.in_draw()){
-    status="Draw!";
-  }
-  else{
-    status = (game.turn()==='w'?"White":"Black") + " to move";
-
-    if(game.in_check()){
-      status += " — Check!";
     }
   }
 
-  statusEl.textContent = status;
-}
+  function updateStatus(){
 
-function resetGame(){
-  game.reset();
-  selectedSquare=null;
+    let status="";
+
+    if(game.in_checkmate()){
+      status = "Checkmate! " +
+        (game.turn()==='w' ? "Black wins" : "White wins");
+    }
+    else if(game.in_draw()){
+      status="Draw!";
+    }
+    else{
+      status = (game.turn()==='w'?"White":"Black") + " to move";
+
+      if(game.in_check()){
+        status += " — Check!";
+      }
+    }
+
+    statusEl.textContent = status;
+  }
+
+  window.resetGame = function(){
+    game.reset();
+    selectedSquare=null;
+    renderBoard();
+  }
+
   renderBoard();
-}
 
-renderBoard();
-
+});
 </script>
 
 </body>
