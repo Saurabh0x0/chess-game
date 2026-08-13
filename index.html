@@ -5,57 +5,240 @@
 <title>Saurabh Chess ♟️</title>
 
 <style>
-body{
-  background:#111;
-  color:white;
-  text-align:center;
-  font-family:Arial;
+* {
+  box-sizing: border-box;
 }
 
-h2{ margin-top:20px; }
-
-#board{
-  display:grid;
-  grid-template-columns:repeat(8,1fr);
-  width:90vw;
-  max-width:420px;
-  margin:20px auto;
-  border:3px solid white;
+body {
+  background: #111;
+  color: white;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 10px;
 }
 
-.square{
-  aspect-ratio:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:32px;
-  cursor:pointer;
+h2 {
+  margin: 10px 0;
+  font-size: 28px;
 }
 
-.light{background:#f0d9b5;}
-.dark{background:#b58863;}
-.highlight{background:#7fbf7f !important;}
-
-button{
-  padding:8px 20px;
-  background:#222;
-  color:white;
-  border:1px solid white;
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-#status{
-  margin:10px;
-  font-weight:bold;
+#board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 90vw;
+  max-width: 420px;
+  border: 3px solid white;
+  background: #333;
+  box-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+
+.square {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.light {
+  background: #f0d9b5;
+}
+
+.dark {
+  background: #b58863;
+}
+
+.highlight {
+  background: #7fbf7f !important;
+  box-shadow: inset 0 0 8px rgba(0,0,0,0.3);
+}
+
+.selected {
+  background: #baca44 !important;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+.square:hover {
+  opacity: 0.9;
+}
+
+#status {
+  margin: 15px;
+  font-weight: bold;
+  font-size: 18px;
+  min-height: 30px;
+  color: #7fbf7f;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 15px 0;
+}
+
+button {
+  padding: 10px 20px;
+  background: #222;
+  color: white;
+  border: 2px solid white;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+button:hover {
+  background: #444;
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+#moveHistory {
+  background: #222;
+  border: 2px solid #444;
+  border-radius: 5px;
+  padding: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  min-width: 150px;
+}
+
+#moveHistory h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #7fbf7f;
+}
+
+.move {
+  padding: 5px;
+  margin: 2px 0;
+  background: #333;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.move.white {
+  border-left: 3px solid #f0d9b5;
+}
+
+.move.black {
+  border-left: 3px solid #b58863;
+}
+
+/* Promotion Dialog */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.7);
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background: #222;
+  border: 3px solid white;
+  border-radius: 10px;
+  padding: 30px;
+  text-align: center;
+  min-width: 250px;
+}
+
+.modal-content h3 {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+}
+
+.promotion-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.piece-btn {
+  padding: 15px;
+  font-size: 40px;
+  background: #333;
+  border: 2px solid #555;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: all 0.2s;
+}
+
+.piece-btn:hover {
+  background: #444;
+  border-color: white;
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+@media (max-width: 600px) {
+  .container {
+    flex-direction: column;
+  }
+  
+  #moveHistory {
+    max-width: 90vw;
+    min-width: auto;
+  }
 }
 </style>
 </head>
 
 <body>
 
-<h2>Saurabh Chess ♟️</h2>
+<h2>♟️ Saurabh Chess ♟️</h2>
 <div id="status"></div>
-<div id="board"></div>
-<button onclick="resetGame()">Restart</button>
+
+<div class="controls">
+  <button onclick="resetGame()">🔄 Restart</button>
+  <button onclick="undoMove()">↶ Undo</button>
+</div>
+
+<div class="container">
+  <div id="board"></div>
+  <div id="moveHistory">
+    <h3>Move History</h3>
+    <div id="moves"></div>
+  </div>
+</div>
+
+<!-- Promotion Modal -->
+<div id="promotionModal" class="modal">
+  <div class="modal-content">
+    <h3>Promote Pawn To:</h3>
+    <div class="promotion-buttons">
+      <button class="piece-btn" onclick="promoteWith('q')">♕</button>
+      <button class="piece-btn" onclick="promoteWith('r')">♖</button>
+      <button class="piece-btn" onclick="promoteWith('b')">♗</button>
+      <button class="piece-btn" onclick="promoteWith('n')">♘</button>
+    </div>
+  </div>
+</div>
 
 <script type="module">
 
@@ -64,37 +247,46 @@ import { Chess } from "https://cdn.jsdelivr.net/npm/chess.js@1.0.0/dist/esm/ches
 const game = new Chess();
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
+const movesEl = document.getElementById("moves");
+const promotionModal = document.getElementById("promotionModal");
 
 let selected = null;
+let moveHistory = [];
+let pendingPromotion = null;
 
 const symbols = {
-  p:"♟", r:"♜", n:"♞", b:"♝", q:"♛", k:"♚"
+  p: "♟", r: "♜", n: "♞", b: "♝", q: "♛", k: "♚"
 };
 
-function getSymbol(piece){
+function getSymbol(piece) {
   let s = symbols[piece.type];
-  if(piece.color === "w"){
-    return s.replace("♟","♙")
-            .replace("♜","♖")
-            .replace("♞","♘")
-            .replace("♝","♗")
-            .replace("♛","♕")
-            .replace("♚","♔");
+  if (piece.color === "w") {
+    return s.replace("♟", "♙")
+      .replace("♜", "♖")
+      .replace("♞", "♘")
+      .replace("♝", "♗")
+      .replace("♛", "♕")
+      .replace("♚", "♔");
   }
   return s;
 }
 
-function render(){
-  boardEl.innerHTML="";
+function render() {
+  boardEl.innerHTML = "";
   const board = game.board();
 
-  for(let r=0;r<8;r++){
-    for(let c=0;c<8;c++){
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
       const square = document.createElement("div");
-      square.className="square "+((r+c)%2==0?"light":"dark");
-      square.dataset.square = String.fromCharCode(97+c)+(8-r);
+      const squareName = String.fromCharCode(97 + c) + (8 - r);
+      square.className = "square " + ((r + c) % 2 == 0 ? "light" : "dark");
+      square.dataset.square = squareName;
 
-      if(board[r][c]){
+      if (selected === squareName) {
+        square.classList.add("selected");
+      }
+
+      if (board[r][c]) {
         square.textContent = getSymbol(board[r][c]);
       }
 
@@ -106,58 +298,127 @@ function render(){
   updateStatus();
 }
 
-function clickSquare(e){
+function clickSquare(e) {
   const square = e.target.dataset.square;
 
-  if(selected){
-    const move = game.move({
-      from:selected,
-      to:square,
-      promotion:'q'
-    });
-
-    clearHighlights();
-    selected = null;
-
-    if(move) render();
-
-  } else {
-    const moves = game.moves({square:square, verbose:true});
-    if(moves.length){
-      selected = square;
-      moves.forEach(m=>{
-        const el = document.querySelector(`[data-square="${m.to}"]`);
-        if(el) el.classList.add("highlight");
+  if (selected) {
+    const moves = game.moves({ square: selected, verbose: true });
+    
+    // Check if this is a promotion move
+    const move = moves.find(m => m.to === square);
+    
+    if (move && move.flags.includes('p')) {
+      // Pawn promotion - store for later
+      pendingPromotion = {
+        from: selected,
+        to: square
+      };
+      promotionModal.classList.add("show");
+      clearHighlights();
+      selected = null;
+    } else {
+      // Regular move
+      const moveResult = game.move({
+        from: selected,
+        to: square,
+        promotion: 'q'
       });
+
+      clearHighlights();
+      selected = null;
+
+      if (moveResult) {
+        moveHistory.push(moveResult.san);
+        render();
+      }
+    }
+  } else {
+    const moves = game.moves({ square: square, verbose: true });
+    if (moves.length) {
+      selected = square;
+      moves.forEach(m => {
+        const el = document.querySelector(`[data-square="${m.to}"]`);
+        if (el) el.classList.add("highlight");
+      });
+      render();
     }
   }
 }
 
-function clearHighlights(){
+function clearHighlights() {
   document.querySelectorAll(".square")
-    .forEach(s=>s.classList.remove("highlight"));
+    .forEach(s => s.classList.remove("highlight", "selected"));
 }
 
-function updateStatus(){
-  let status="";
-  if(game.isCheckmate()){
-    status = "Checkmate! " +
-      (game.turn()==="w" ? "Black wins" : "White wins");
+window.promoteWith = function(piece) {
+  if (pendingPromotion) {
+    const moveResult = game.move({
+      from: pendingPromotion.from,
+      to: pendingPromotion.to,
+      promotion: piece
+    });
+
+    if (moveResult) {
+      moveHistory.push(moveResult.san);
+      pendingPromotion = null;
+      promotionModal.classList.remove("show");
+      render();
+    }
   }
-  else if(game.isDraw()){
-    status="Draw!";
+};
+
+function updateStatus() {
+  let status = "";
+  if (game.isCheckmate()) {
+    status = "🏁 Checkmate! " +
+      (game.turn() === "w" ? "Black wins" : "White wins");
+  } else if (game.isDraw()) {
+    status = "🤝 Draw!";
+  } else if (game.isStalemate()) {
+    status = "🤝 Stalemate!";
+  } else {
+    status = (game.turn() === "w" ? "⚪" : "⚫") + " " +
+      (game.turn() === "w" ? "White" : "Black") + " to move";
+    if (game.isCheck()) status += " — ⚠️ Check!";
   }
-  else{
-    status = (game.turn()==="w"?"White":"Black")+" to move";
-    if(game.isCheck()) status+=" — Check!";
-  }
-  statusEl.textContent=status;
+  statusEl.textContent = status;
+  updateMoveHistory();
 }
 
-window.resetGame = function(){
+function updateMoveHistory() {
+  movesEl.innerHTML = "";
+  for (let i = 0; i < moveHistory.length; i += 2) {
+    const moveDiv = document.createElement("div");
+    const white = moveHistory[i];
+    const black = moveHistory[i + 1];
+    
+    moveDiv.innerHTML = `<span class="move white">${i/2 + 1}. ${white}</span>` +
+      (black ? `<span class="move black">${black}</span>` : "");
+    moveDiv.style.display = "grid";
+    moveDiv.style.gridTemplateColumns = "1fr 1fr";
+    moveDiv.style.gap = "5px";
+    movesEl.appendChild(moveDiv);
+  }
+  movesEl.scrollTop = movesEl.scrollHeight;
+}
+
+window.resetGame = function() {
   game.reset();
-  selected=null;
+  selected = null;
+  moveHistory = [];
+  pendingPromotion = null;
+  promotionModal.classList.remove("show");
   render();
+};
+
+window.undoMove = function() {
+  if (moveHistory.length > 0) {
+    game.undo();
+    moveHistory.pop();
+    selected = null;
+    clearHighlights();
+    render();
+  }
 };
 
 render();
